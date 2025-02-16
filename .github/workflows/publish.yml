@@ -43,6 +43,11 @@ jobs:
         with:
           static_site_generator: next
 
+      - if: ${{ secrets.NEXT_PUBLIC_CONVEX_URL == '' }}
+        run: echo "Empty NEXT_PUBLIC_CONVEX_URL"
+      - if: ${{ secrets.CONVEX_DEPLOY_KEY != '' }}
+        run: echo "Empty CONVEX_DEPLOY_KEY"
+
       - name: Build with Next.js 🏗️
         env:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
