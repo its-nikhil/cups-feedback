@@ -23,8 +23,6 @@ jobs:
 
       - name: Setup Node.js ⚙️ - Cache dependencies ⚡ - Install dependencies 🔧
         uses: ./.github/workflows/setup-node.yml
-        with:
-          branch_name: main
 
       - name: Setup Pages ⚙️
         uses: actions/configure-pages@v4
