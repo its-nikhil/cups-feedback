@@ -43,10 +43,28 @@ jobs:
         with:
           static_site_generator: next
 
-      - if: ${{ secrets.NEXT_PUBLIC_CONVEX_URL == '' }}
-        run: echo "Empty NEXT_PUBLIC_CONVEX_URL"
-      - if: ${{ secrets.CONVEX_DEPLOY_KEY != '' }}
-        run: echo "Empty CONVEX_DEPLOY_KEY"
+      - name: Check secret presence
+        id: checksecrets
+        shell: bash
+        run: |
+          if [ \"$NEXT_PUBLIC_CONVEX_URL\" == \"\" ]; then
+              echo \"secretspresent=NO\" >> $GITHUB_OUTPUT
+          else
+              echo \"secretspresent=YES\" >> $GITHUB_OUTPUT
+          fi
+        env:
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+      - name: Check secret2 presence
+        id: checksecrets2
+        shell: bash
+        run: |
+          if [ \"$CONVEX_DEPLOY_KEY\" == \"\" ]; then
+              echo \"secretspresent=NO\" >> $GITHUB_OUTPUT
+          else
+              echo \"secretspresent=YES\" >> $GITHUB_OUTPUT
+          fi
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
       - name: Build with Next.js 🏗️
         env:
