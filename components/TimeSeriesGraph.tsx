@@ -13,7 +13,7 @@ import {
 
 export default function TimeSeriesGraph() {
   const historicalVotes = useQuery(api.feedbackFunctions.getHistoricalVotes, {
-    // limit: 100,
+    limit: 100,
   })
 
   if (!historicalVotes) return null
