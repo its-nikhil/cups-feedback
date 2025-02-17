@@ -1,5 +1,6 @@
 import { useQuery } from 'convex/react'
 import { api } from '../convex/_generated/api'
+import TimeSeriesGraph from './TimeSeriesGraph'
 
 export default function VoteVisualization() {
   const counts = useQuery(api.feedbackFunctions.getCupCounts)
@@ -53,6 +54,10 @@ export default function VoteVisualization() {
           <div className="text-2xl font-bold text-red-500">{counts.red}</div>
           <div>Red</div>
         </div>
+      </div>
+      <div className="w-full">
+        <h3 className="text-xl font-bold mb-4">Vote History</h3>
+        <TimeSeriesGraph />
       </div>
     </div>
   )

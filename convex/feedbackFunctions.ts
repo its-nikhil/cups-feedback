@@ -10,8 +10,13 @@ export const getFeedbackSession = query({
 
 export const getCupCounts = query({
   handler: async (ctx) => {
-    const counts = await ctx.db.query('cupCounts').collect()
-    return counts[0] || { red: 0, yellow: 0, green: 0 }
+    return (
+      (await ctx.db.query('cupCounts').order('desc').first()) || {
+        red: 0,
+        yellow: 0,
+        green: 0,
+      }
+    )
   },
 })
 
@@ -95,10 +100,7 @@ export const resetCounts = mutation({
       throw new Error('Unauthenticated')
     }
 
-    const counts = await ctx.db.query('cupCounts').collect()
-    if (counts.length > 0) {
-      await ctx.db.patch(counts[0]._id, { red: 0, yellow: 0, green: 0 })
-    }
+    await ctx.db.insert('cupCounts', { red: 0, yellow: 0, green: 0 })
     // Reset all user votes
     const users = await ctx.db.query('users').collect()
     for (const user of users) {
@@ -161,12 +163,16 @@ export const removeUser = mutation({
       .first()
     if (user) {
       if (user.vote) {
-        const counts = await ctx.db.query('cupCounts').first()
+        const counts = await ctx.db.query('cupCounts').order('desc').first()
         if (counts) {
-          await ctx.db.patch(counts._id, {
-            [user.vote]:
-              (counts[user.vote as keyof typeof counts] as number) - 1,
-          })
+          const newCounts = {
+            red: counts.red,
+            yellow: counts.yellow,
+            green: counts.green,
+          }
+          newCounts[user.vote as keyof typeof newCounts] =
+            (counts[user.vote as keyof typeof counts] as number) - 1
+          await ctx.db.insert('cupCounts', newCounts)
         }
       }
       await ctx.db.delete(user._id)
@@ -188,24 +194,40 @@ export const vote = mutation({
       throw new Error('Unauthenticated')
     }
 
-    const counts = await ctx.db.query('cupCounts').first()
-    if (!counts) {
-      throw new Error('Cup counts not found')
+    const counts = (await ctx.db.query('cupCounts').order('desc').first()) || {
+      red: 0,
+      yellow: 0,
+      green: 0,
     }
 
     // no change
     if (user.vote == color) return
 
-    if (user.vote) {
-      await ctx.db.patch(counts._id, {
-        [user.vote]: (counts[user.vote as keyof typeof counts] as number) - 1,
-      })
+    const newCounts = {
+      red: counts.red,
+      yellow: counts.yellow,
+      green: counts.green,
     }
 
-    await ctx.db.patch(counts._id, {
-      [color]: (counts[color as keyof typeof counts] as number) + 1,
-    })
+    newCounts[color as keyof typeof newCounts] =
+      (counts[color as keyof typeof counts] as number) + 1
+    if (user.vote) {
+      newCounts[user.vote as keyof typeof newCounts] =
+        (counts[user.vote as keyof typeof counts] as number) - 1
+    }
 
+    await ctx.db.insert('cupCounts', newCounts)
     await ctx.db.patch(user._id, { vote: color })
+  },
+})
+
+export const getHistoricalVotes = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit }) => {
+    const query = ctx.db.query('cupCounts').order('desc')
+    if (limit) {
+      return await query.take(limit)
+    }
+    return await query.collect()
   },
 })
